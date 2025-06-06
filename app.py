@@ -185,6 +185,17 @@ onglets = st.tabs([
 # Onglet 1 : Dessiner
 with onglets[0]:
     st.subheader("🎨 Zone de dessin interactive")
+
+    colD1, colD2, colD3 = st.columns(3)
+    with colD1:
+        matiere_dessin = st.selectbox("🧱 Matière", ["Acier", "Alu", "Inox"], key="matiere_dessin")
+    with colD2:
+        epaisseur_dessin = st.slider("📏 Épaisseur (mm)", 0.5, 20.0, step=0.5, key="epaisseur_dessin")
+    with colD3:
+        quantite_dessin = st.number_input("🔢 Quantité", min_value=1, value=1, key="quantite_dessin")
+
+    st.markdown(f"🧾 **Récapitulatif** : Matière = `{matiere_dessin}`, Épaisseur = `{epaisseur_dessin} mm`, Quantité = `{quantite_dessin}`")
+
     canvas_result = st_canvas(
         fill_color="rgba(255, 165, 0, 0.3)",
         stroke_width=2,
@@ -193,8 +204,10 @@ with onglets[0]:
         drawing_mode="freedraw",
         key="canvas",
     )
+
     if canvas_result.json_data:
         st.success("✅ Dessin sauvegardé (JSON dispo)")
+
 
 # Onglet 2 : Ajouter DXF
 with onglets[1]:
