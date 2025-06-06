@@ -4,7 +4,6 @@ import ezdxf
 import math
 import matplotlib.pyplot as plt
 
-
 def load_dxf(file_path):
     try:
         doc = ezdxf.readfile(file_path)
@@ -13,17 +12,14 @@ def load_dxf(file_path):
         print("Erreur lors de la lecture du fichier DXF :", e)
         return None
 
-
 def distance(p1, p2):
     return math.dist(p1, p2)
-
 
 def arc_length(entity):
     start_angle = math.radians(entity.dxf.start_angle)
     end_angle = math.radians(entity.dxf.end_angle)
     angle = abs(end_angle - start_angle)
     return abs(angle * entity.dxf.radius)
-
 
 def get_dxf_perimeter_and_holes(dxf_doc):
     msp = dxf_doc.modelspace()
@@ -59,7 +55,6 @@ def get_dxf_perimeter_and_holes(dxf_doc):
             details.append(("Polyligne", perimeter))
 
     return round(perimeter, 2), num_holes, details
-
 
 def plot_dxf(dxf_doc):
     msp = dxf_doc.modelspace()
@@ -97,7 +92,6 @@ def plot_dxf(dxf_doc):
     plt.axis('off')
     plt.tight_layout()
     return fig
-
 
 def modify_dxf(output_path, add_line=None, add_circle=None, add_rectangle=None):
     doc = ezdxf.new(dxfversion="R2010")
