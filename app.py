@@ -182,31 +182,65 @@ with col2:
 onglets = st.tabs([
     "🖌️ Dessiner ✏️", "➕ Ajouter DXF ✨", "📂 Analyser DXF 🔎", "🛠️ Options ✨", "👤 Mon Profil 💼", "⚙️ Demandes 📂", "🏪 Test matériaux ⚖️"])
 
-# Onglet 1 : Dessiner
-with onglets[0]:
-    st.subheader("🎨 Zone de dessin interactive")
+# ============================
+# 🎨 Zone de dessin interactive
+# ============================
+st.header("🎨 Zone de dessin interactive")
+drawing_mode = st.selectbox("✏️ Mode de dessin", ("freedraw", "line", "rect", "circle"))
+stroke_width = st.slider("🖌️ Épaisseur du trait", 1, 10, 2)
+fill_color = st.color_picker("🎨 Couleur de remplissage", "#ee6677")
+stroke_color = st.color_picker("🖍️ Couleur du trait", "#000000")
 
-    colD1, colD2, colD3 = st.columns(3)
-    with colD1:
-        matiere_dessin = st.selectbox("🧱 Matière", ["Acier", "Alu", "Inox"], key="matiere_dessin")
-    with colD2:
-        epaisseur_dessin = st.slider("📏 Épaisseur (mm)", 0.5, 20.0, step=0.5, key="epaisseur_dessin")
-    with colD3:
-        quantite_dessin = st.number_input("🔢 Quantité", min_value=1, value=1, key="quantite_dessin")
+canvas_result = st_canvas(
+    fill_color=fill_color,
+    stroke_width=stroke_width,
+    stroke_color=stroke_color,
+    background_color="#ffffff",
+    height=400,
+    width=800,
+    drawing_mode=drawing_mode,
+    key="canvas",
+)
 
-    st.markdown(f"🧾 **Récapitulatif** : Matière = `{matiere_dessin}`, Épaisseur = `{epaisseur_dessin} mm`, Quantité = `{quantite_dessin}`")
+if canvas_result.json_data:
+    st.success("✅ Dessin sauvegardé (JSON dispo)")
+    export_format = st.selectbox("💾 Exporter en format", ("json", "pdf", "dxf"))
 
-    canvas_result = st_canvas(
-        fill_color="rgba(255, 165, 0, 0.3)",
-        stroke_width=2,
-        background_color="#00000000",
-        height=400,
-        drawing_mode="freedraw",
-        key="canvas",
-    )
+    if export_format == "pdf":
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt="Aperçu du dessin (formes non visibles)", ln=True, align="C")
+        pdf.output("dessin_export.pdf")
+        with open("dessin_export.pdf", "rb") as f:
+            st.download_button("📄 Télécharger PDF", f, file_name="dessin_export.pdf")
 
-    if canvas_result.json_data:
-        st.success("✅ Dessin sauvegardé (JSON dispo)")
+    elif export_format == "json":
+        json_str = json.dumps(canvas_result.json_data)
+        st.download_button("📄 Télécharger JSON", json_str, file_name="dessin.json")
+
+    elif export_format == "dxf":
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+        for obj in canvas_result.json_data["objects"]:
+            if obj["type"] == "line":
+                x1, y1 = obj["x1"], obj["y1"]
+                x2, y2 = obj["x2"], obj["y2"]
+                msp.add_line((x1, y1), (x2, y2))
+            elif obj["type"] == "rect":
+                x, y = obj["left"], obj["top"]
+                w, h = obj["width"], obj["height"]
+                msp.add_lwpolyline([
+                    (x, y), (x + w, y), (x + w, y + h), (x, y + h), (x, y)
+                ], close=True)
+            elif obj["type"] == "circle":
+                x, y = obj["left"] + obj["radius"], obj["top"] + obj["radius"]
+                r = obj["radius"]
+                msp.add_circle((x, y), r)
+        buffer = io.BytesIO()
+        doc.write(buffer)
+        st.download_button("📐 Télécharger DXF", buffer.getvalue(), file_name="dessin_export.dxf")
+
 
 
 # Onglet 2 : Ajouter DXF
