@@ -3,50 +3,66 @@
 import streamlit as st
 import tempfile
 import os
-from utils.dxf_reader import load_dxf, get_dxf_perimeter_and_holes, plot_dxf
+from utils.dxf_reader import load_dxf, get_dxf_perimeter_and_holes, plot_dxf, modify_dxf
 
-st.set_page_config(page_title="PartLab – fichiers DXF", layout="centered")
+st.set_page_config(page_title="PartLab – DXF Editor", layout="centered")
 
-# Logo + Titre
-col1, col2 = st.columns([1, 6])
-with col1:
-    st.image("assets/logo_arcanum.webp", width=100)
-with col2:
-    st.title("PartLab – fichiers DXF")
+st.image("assets/logo_arcanum.webp", width=100)
+st.title("PartLab – Éditeur de fichiers DXF")
 
-# Étape 1
-st.markdown("### 📂 Étape 1 : Importer un fichier DXF")
-uploaded_file = st.file_uploader("Déposez votre fichier .dxf ici :", type=["dxf"])
+# Section création DXF
+st.markdown("### ✏️ Création ou modification d’un fichier DXF")
 
-if uploaded_file is not None:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".dxf") as tmp_file:
-        tmp_file.write(uploaded_file.read())
-        tmp_path = tmp_file.name
+shape = st.selectbox("Ajouter une forme :", ["Aucune", "Ligne", "Cercle", "Rectangle"])
+output_filename = st.text_input("Nom du fichier de sortie (avec .dxf)", "output.dxf")
 
-    st.success("✅ Fichier chargé avec succès.")
+params = {}
+if shape == "Ligne":
+    x1 = st.number_input("X début", value=0.0)
+    y1 = st.number_input("Y début", value=0.0)
+    x2 = st.number_input("X fin", value=100.0)
+    y2 = st.number_input("Y fin", value=100.0)
+    params["add_line"] = ((x1, y1), (x2, y2))
 
-    # Étape 2
-    st.markdown("### 🧱 Étape 2 : Choix de la matière")
-    matiere = st.selectbox("Matière :", ["Acier", "Alu", "Inox", "Autre"])
+elif shape == "Cercle":
+    cx = st.number_input("Centre X", value=50.0)
+    cy = st.number_input("Centre Y", value=50.0)
+    radius = st.number_input("Rayon", value=20.0)
+    params["add_circle"] = ((cx, cy), radius)
 
-    # Étape 3
-    st.markdown("### 🧪 Étape 3 : Analyse du fichier")
-    try:
-        dxf_doc = load_dxf(tmp_path)
-        if dxf_doc:
-            perimetre, nb_trous, _ = get_dxf_perimeter_and_holes(dxf_doc)
+elif shape == "Rectangle":
+    rx = st.number_input("Coin bas gauche X", value=10.0)
+    ry = st.number_input("Coin bas gauche Y", value=10.0)
+    width = st.number_input("Largeur", value=40.0)
+    height = st.number_input("Hauteur", value=30.0)
+    params["add_rectangle"] = ((rx, ry), width, height)
 
-            st.markdown(f"✅ **Matière :** `{matiere}`")
-            st.markdown(f"📏 **Périmètre estimé :** `{perimetre} mm`")
-            st.markdown(f"🕳️ **Nombre de trous :** `{nb_trous}`")
+if st.button("🛠️ Générer le fichier DXF"):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".dxf") as tmp:
+        path = modify_dxf(tmp.name, **params)
+        st.success(f"✅ Fichier généré : `{output_filename}`")
+        dxf_doc = load_dxf(path)
+        fig = plot_dxf(dxf_doc)
+        st.pyplot(fig)
+        with open(path, "rb") as f:
+            st.download_button("📥 Télécharger le fichier DXF", data=f, file_name=output_filename)
 
-            # Affichage DXF
-            st.markdown("### 🖼️ Aperçu du fichier DXF")
-            fig = plot_dxf(dxf_doc)
-            st.pyplot(fig)
+# Analyse d’un fichier DXF existant
+st.markdown("---")
+st.markdown("### 📂 Analyse d’un fichier DXF existant")
+uploaded_file = st.file_uploader("Importer un fichier DXF :", type=["dxf"])
 
-            st.success("✅ Analyse terminée.")
-        else:
-            st.error("❌ Erreur de chargement du fichier DXF.")
-    except Exception as e:
-        st.error(f"Erreur lors de l’analyse du fichier : {str(e)}")
+if uploaded_file:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".dxf") as tmp:
+        tmp.write(uploaded_file.read())
+        temp_path = tmp.name
+
+    dxf_doc = load_dxf(temp_path)
+    if dxf_doc:
+        périmètre, nb_trous, _ = get_dxf_perimeter_and_holes(dxf_doc)
+        st.markdown(f"📏 **Périmètre estimé :** `{périmètre} mm`")
+        st.markdown(f"🕳️ **Nombre de trous détectés :** `{nb_trous}`")
+        fig = plot_dxf(dxf_doc)
+        st.pyplot(fig)
+    else:
+        st.error("❌ Impossible de lire le fichier DXF.")
