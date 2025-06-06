@@ -1,108 +1,99 @@
+# 📄 Fichier : utils/dxf_reader.py
+
 import ezdxf
 import math
 import matplotlib.pyplot as plt
 
-def analyze_dxf_file(file_path):
+
+def load_dxf(file_path):
     try:
         doc = ezdxf.readfile(file_path)
-        msp = doc.modelspace()
+        return doc
     except Exception as e:
-        print("Erreur lors de la lecture du DXF :", e)
-        return 0, 0, []
+        print("Erreur lors de la lecture du fichier DXF :", e)
+        return None
 
-    perimeter = 0
-    nb_holes = 0
+
+def distance(p1, p2):
+    return math.dist(p1, p2)
+
+
+def arc_length(entity):
+    start_angle = math.radians(entity.dxf.start_angle)
+    end_angle = math.radians(entity.dxf.end_angle)
+    angle = abs(end_angle - start_angle)
+    return abs(angle * entity.dxf.radius)
+
+
+def get_dxf_perimeter_and_holes(dxf_doc):
+    msp = dxf_doc.modelspace()
+    perimeter = 0.0
+    num_holes = 0
     details = []
 
     for entity in msp:
         if entity.dxftype() == "LINE":
-            start = entity.dxf.start
-            end = entity.dxf.end
-            length = math.dist(start, end)
+            length = distance(entity.dxf.start, entity.dxf.end)
             perimeter += length
-            details.append(("LINE", length))
-
-        elif entity.dxftype() == "LWPOLYLINE":
-            points = entity.get_points('xy')
-            closed = entity.closed
-            for i in range(len(points) - 1):
-                p1 = points[i]
-                p2 = points[i + 1]
-                length = math.dist(p1, p2)
-                perimeter += length
-                details.append(("LWPOLYLINE", length))
-            if closed:
-                p1 = points[-1]
-                p2 = points[0]
-                length = math.dist(p1, p2)
-                perimeter += length
-                details.append(("LWPOLYLINE", length))
+            details.append(("Ligne", length))
 
         elif entity.dxftype() == "CIRCLE":
-            r = entity.dxf.radius
-            length = 2 * math.pi * r
+            length = 2 * math.pi * entity.dxf.radius
             perimeter += length
-            nb_holes += 1
-            details.append(("CIRCLE", length))
+            num_holes += 1
+            details.append(("Cercle", length))
 
         elif entity.dxftype() == "ARC":
-            start_angle = math.radians(entity.dxf.start_angle)
-            end_angle = math.radians(entity.dxf.end_angle)
-            angle = abs(end_angle - start_angle)
-            arc_length = angle * entity.dxf.radius
-            perimeter += arc_length
-            details.append(("ARC", arc_length))
-
-        elif entity.dxftype() == "SPLINE":
-            try:
-                fit_points = entity.fit_points
-                for i in range(len(fit_points) - 1):
-                    length = math.dist(fit_points[i], fit_points[i + 1])
-                    perimeter += length
-                    details.append(("SPLINE", length))
-            except Exception:
-                pass
-
-    return round(perimeter, 2), nb_holes, details
-
-
-def plot_dxf(file_path):
-    try:
-        doc = ezdxf.readfile(file_path)
-        msp = doc.modelspace()
-    except Exception as e:
-        print("Erreur lors de l'ouverture DXF :", e)
-        return None
-
-    fig, ax = plt.subplots()
-    for entity in msp:
-        if entity.dxftype() == "LINE":
-            start = entity.dxf.start
-            end = entity.dxf.end
-            ax.plot([start[0], end[0]], [start[1], end[1]], 'b')
+            length = arc_length(entity)
+            perimeter += length
+            details.append(("Arc", length))
 
         elif entity.dxftype() == "LWPOLYLINE":
-            points = entity.get_points('xy')
-            x, y = zip(*points)
-            ax.plot(x, y, 'g')
+            points = [(p[0], p[1]) for p in entity.get_points()]
+            if len(points) < 2:
+                continue
+            for i in range(len(points) - 1):
+                perimeter += distance(points[i], points[i+1])
             if entity.closed:
-                ax.plot([x[-1], x[0]], [y[-1], y[0]], 'g')
+                perimeter += distance(points[-1], points[0])
+            details.append(("Polyligne", perimeter))
+
+    return round(perimeter, 2), num_holes, details
+
+
+def plot_dxf(dxf_doc):
+    msp = dxf_doc.modelspace()
+    fig, ax = plt.subplots()
+
+    for entity in msp:
+        if entity.dxftype() == "LINE":
+            x = [entity.dxf.start[0], entity.dxf.end[0]]
+            y = [entity.dxf.start[1], entity.dxf.end[1]]
+            ax.plot(x, y, 'b')
 
         elif entity.dxftype() == "CIRCLE":
-            center = entity.dxf.center
-            r = entity.dxf.radius
-            circle = plt.Circle((center[0], center[1]), r, color='r', fill=False)
+            circle = plt.Circle((entity.dxf.center[0], entity.dxf.center[1]), entity.dxf.radius,
+                                color='r', fill=False)
             ax.add_patch(circle)
 
         elif entity.dxftype() == "ARC":
-            center = entity.dxf.center
-            radius = entity.dxf.radius
-            start_angle = entity.dxf.start_angle
-            end_angle = entity.dxf.end_angle
-            theta = [math.radians(a) for a in range(int(start_angle), int(end_angle))]
-            x = [center[0] + radius * math.cos(t) for t in theta]
-            y = [center[1] + radius * math.sin(t) for t in theta]
-            ax.plot(x, y, 'orange')
+            arc = plt.Arc((entity.dxf.center[0], entity.dxf.center[1]),
+                          2 * entity.dxf.radius, 2 * entity.dxf.radius,
+                          angle=0,
+                          theta1=entity.dxf.start_angle,
+                          theta2=entity.dxf.end_angle,
+                          color='orange')
+            ax.add_patch(arc)
+
+        elif entity.dxftype() == "LWPOLYLINE":
+            points = [(p[0], p[1]) for p in entity.get_points()]
+            if len(points) > 1:
+                x, y = zip(*points)
+                ax.plot(x, y, 'g')
+                if entity.closed:
+                    ax.plot([x[-1], x[0]], [y[-1], y[0]], 'g')
 
     ax.set_aspect('equal')
+    plt.axis('off')
+    plt.tight_layout()
     return fig
