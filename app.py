@@ -182,7 +182,8 @@ with col2:
     """, unsafe_allow_html=True)
 
 onglets = st.tabs([
-    "🖌️ Dessiner ✏️", "➕ Ajouter DXF ✨", "📂 Analyser DXF 🔎", "🛠️ Options ✨", "👤 Mon Profil 💼", "⚙️ Demandes 📂", "🏪 Test matériaux ⚖️"])
+    "🖌️ Dessiner ✏️", "➕ Ajouter DXF ✨", "📂 Analyser DXF 🔎", "🛠️ Options ✨", "👤 Mon Profil 💼", "⚙️ Demandes 📂", "🏪 Test matériaux ⚖️", "📅 Devis 💰"
+])
 
 with onglets[0]:
     st.header("🎨 Zone de dessin interactive")
