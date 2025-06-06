@@ -16,25 +16,124 @@ except ModuleNotFoundError as e:
 
 st.set_page_config(page_title="PartLab – DXF Lab Creator", layout="wide")
 
+# 🔒 Masquer menu/partage Streamlit
+st.markdown("""
+    <style>
+    #MainMenu, header, footer {
+        visibility: hidden;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # ============================
-# 🌗 Choix du thème (Dark/Light)
+# 🌗 Thème Personnalisé Synthwave
 # ============================
-theme = st.sidebar.selectbox("🎨 Thème", ["Sombre", "Clair"])
+theme = st.sidebar.selectbox("🎨 Thème", ["Sombre", "Clair", "Synthwave 🌅"], key="theme_selector")
+
 if theme == "Clair":
     st.markdown("""
         <style>
-        body { background-color: #ffffff; color: #000000; }
+        body {
+            background: linear-gradient(to bottom right, #ffffff, #eeeeee);
+            color: #000000;
+        }
+        .stButton>button {
+            background: linear-gradient(to right, #2980b9, #6dd5fa);
+            color: black;
+            font-weight: bold;
+            border-radius: 10px;
+            border: none;
+            transition: 0.3s ease;
+        }
+        .stButton>button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #2980b9;
+        }
         </style>
     """, unsafe_allow_html=True)
+
+elif theme == "Synthwave 🌅":
+    st.markdown("""
+        <style>
+        body {
+            background: linear-gradient(to bottom right, #0f0c29, #302b63, #24243e);
+            color: #f8f8f8;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .stButton>button {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+            font-weight: bold;
+            border-radius: 12px;
+            border: none;
+            padding: 8px 16px;
+            box-shadow: 0px 0px 10px rgba(255, 65, 108, 0.6);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .stButton>button:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 0px 15px rgba(255, 65, 108, 0.9);
+        }
+
+        .stTabs [data-baseweb="tab"] {
+            background-color: #1e1e2f;
+            color: #f0f0f0;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .stTabs [data-baseweb="tab"]:hover {
+            background-color: #292944;
+        }
+
+        .stTabs [aria-selected="true"] {
+            background: linear-gradient(to right, #fc466b, #3f5efb);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 0 10px #fc466b;
+        }
+
+        h1, h2, h3, h4 {
+            text-shadow: 0 0 5px #ff6ec4, 0 0 10px #7873f5;
+        }
+
+        #MainMenu, header, footer {
+            visibility: hidden;
+        }
+        </style>
+
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
+    """, unsafe_allow_html=True)
+
 else:
     st.markdown("""
         <style>
-        body { background-color: #0e1117; color: #ffffff; }
+        body {
+            background: linear-gradient(to bottom right, #1f1f1f, #2a2a2a);
+            color: #f0f0f0;
+        }
+        .stButton>button {
+            background: linear-gradient(to right, #f39c12, #e67e22);
+            color: white;
+            font-weight: bold;
+            border-radius: 10px;
+            border: none;
+            transition: 0.3s ease;
+        }
+        .stButton>button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #f39c12;
+        }
+        h1, h2, h3 {
+            text-shadow: 1px 1px 2px #000000;
+        }
         </style>
     """, unsafe_allow_html=True)
 
 # ============================
-# 🛡️ Authentification
+# 🚡 Authentification
 # ============================
 USERS = {
     "admin": {"password": "adminpass", "role": "admin"},
@@ -48,9 +147,9 @@ if "logged_in" not in st.session_state:
 
 if not st.session_state.logged_in:
     st.title("🔐 Connexion à PartLab")
-    username = st.text_input("Identifiant")
-    password = st.text_input("Mot de passe", type="password")
-    if st.button("Connexion", key="login_button"):
+    username = st.text_input("Identifiant", key="username")
+    password = st.text_input("Mot de passe", type="password", key="password")
+    if st.button("Connexion", key="login_btn"):
         user = USERS.get(username)
         if user and user["password"] == password:
             st.session_state.logged_in = True
@@ -62,7 +161,7 @@ if not st.session_state.logged_in:
             st.error("Identifiants incorrects ❌")
     st.stop()
 
-if st.sidebar.button("🔓 Se déconnecter", key="logout_sidebar"):
+if st.sidebar.button("🔓 Se déconnecter", key="logout_btn"):
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.session_state.role = ""
@@ -75,47 +174,18 @@ col1, col2 = st.columns([1, 5])
 with col1:
     st.image("assets/logo_arcanum.webp", width=100)
 with col2:
-    st.title(f"PartLab – Bienvenue {st.session_state.username}")
-    st.caption(f"Rôle : {st.session_state.role.upper()}")
+    st.markdown("""
+    <h1 style='font-size: 2.2em;'>🎨 PartLab – Bienvenue <span style='color: #f39c12;'>{}</span></h1>
+    <h4 style='opacity: 0.7;'>Rôle : <b>{}</b></h4>
+    """.format(st.session_state.username, st.session_state.role.upper()), unsafe_allow_html=True)
 
-# 🔀 Onglets principaux avec animations
-onglets = st.tabs(["🖌️ Dessiner ✏️", "➕ Ajouter DXF ✨", "📂 Analyser DXF 🔎", "🛠️ Options ✨", "👤 Mon Profil 💼", "🏪 Test matériaux ⚖️"])
+onglets = st.tabs([
+    "🖌️ Dessiner ✏️", "➕ Ajouter DXF ✨", "📂 Analyser DXF 🔎", "🛠️ Options ✨", "👤 Mon Profil 💼", "⚙️ Demandes 📂", "🏪 Test matériaux ⚖️"])
 
-# === Mise à jour Onglet 1 : Dessiner avec mesure ===
-with onglets[0]:
-    st.header("🖌️ Zone de dessin avec mesure")
-    st.markdown("Dessinez des formes et mesurez les distances.")
-
-    with st.expander("Paramètres du canvas"):
-        stroke_width = st.slider("🌌 Épaisseur du trait :", 1, 10, 3)
-        bg_color = st.color_picker("🎨 Couleur de fond :", "#FFFFFF")
-        drawing_mode = st.selectbox(
-            "📝 Mode de dessin :", ("freedraw", "line", "rect", "circle", "transform")
-        )
-
-    canvas_result = st_canvas(
-        fill_color="#00000000",
-        stroke_width=stroke_width,
-        stroke_color="#000000",
-        background_color=bg_color,
-        height=500,
-        drawing_mode=drawing_mode,
-        key="canvas_zone1",
-    )
-
-    if canvas_result.json_data is not None:
-        objects = canvas_result.json_data["objects"]
-        if drawing_mode == "line" and len(objects) >= 1:
-            shape = objects[-1]
-            x1, y1 = shape["x1"], shape["y1"]
-            x2, y2 = shape["x2"], shape["y2"]
-            distance_px = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-            distance_mm = distance_px * 0.264583
-            st.info(f"🔹 Distance mesurée : `{distance_mm:.2f} mm`")
-
-        # ✨ Export JSON / SVG brut
-        st.download_button("📂 Exporter JSON brut", json.dumps(canvas_result.json_data), file_name="dessin.json")
-
-    # 🔧 Bouton pour tout effacer (recharge la page)
-    if st.button("🔄 Effacer le dessin"):
-        st.experimental_rerun()
+# === Onglet Suggestions
+with onglets[5]:
+    st.header("🧙‍♂️ Boîte à idées & Améliorations")
+    st.markdown("Ajoute ici des idées de fonctionnalités ou d'amélioration du site PartLab.")
+    suggestion = st.text_area("💬 Votre idée / amélioration", placeholder="Ex : Ajouter une fonction pour générer des pentes en tôle...")
+    if st.button("📉 Soumettre la demande", key="submit_suggestion"):
+        st.success("Merci pour ta suggestion ! Elle a bien été enregistrée. 🔥")
