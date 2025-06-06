@@ -12,6 +12,23 @@ except ModuleNotFoundError as e:
 st.set_page_config(page_title="PartLab – DXF Lab Creator", layout="wide")
 
 # ============================
+# 🌗 Choix du thème (Dark/Light)
+# ============================
+theme = st.sidebar.selectbox("🎨 Thème", ["Sombre", "Clair"])
+if theme == "Clair":
+    st.markdown("""
+        <style>
+        body { background-color: #ffffff; color: #000000; }
+        </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+        <style>
+        body { background-color: #0e1117; color: #ffffff; }
+        </style>
+    """, unsafe_allow_html=True)
+
+# ============================
 # 🛡️ Authentification
 # ============================
 USERS = {
@@ -28,7 +45,7 @@ if not st.session_state.logged_in:
     st.title("🔐 Connexion à PartLab")
     username = st.text_input("Identifiant")
     password = st.text_input("Mot de passe", type="password")
-    if st.button("Connexion"):
+    if st.button("Connexion", key="login_button"):
         user = USERS.get(username)
         if user and user["password"] == password:
             st.session_state.logged_in = True
@@ -40,7 +57,7 @@ if not st.session_state.logged_in:
             st.error("Identifiants incorrects ❌")
     st.stop()
 
-if st.button("🔓 Se déconnecter"):
+if st.button("🔓 Se déconnecter", key="logout_main"):
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.session_state.role = ""
@@ -56,18 +73,18 @@ with col2:
     st.title(f"PartLab – Bienvenue {st.session_state.username}")
     st.caption(f"Rôle : {st.session_state.role.upper()}")
 
-# 🔀 Onglets principaux
-onglets = st.tabs(["🖌️ Dessiner", "➕ Ajouter des formes DXF", "📂 Analyser un DXF", "👤 Utilisateur"])
+# 🔀 Onglets principaux avec animations
+onglets = st.tabs(["🖌️ Dessiner ✏️", "➕ Ajouter DXF ✨", "📂 Analyser DXF 🔎", "👤 Mon Profil 💼"])
 
 # === Onglet 1 : Dessiner
 with onglets[0]:
-    st.header("🖌️ Zone de dessin")
+    st.header("🖌️ Zone de dessin collaborative")
     mode = st.selectbox("Mode de dessin", ["freedraw", "line", "rect", "circle", "transform"])
     canvas_result = st_canvas(
         fill_color="rgba(0, 0, 255, 0.3)",
         stroke_width=2,
         stroke_color="#000000",
-        background_color="#f0f0f0",
+        background_color="#f0f0f0" if theme == "Clair" else "#262730",
         height=400,
         width=800,
         drawing_mode=mode,
@@ -155,4 +172,4 @@ with onglets[3]:
     st.header("👤 Informations utilisateur")
     st.markdown(f"**Nom d'utilisateur :** `{st.session_state.username}`")
     st.markdown(f"**Rôle :** `{st.session_state.role}`")
-    st.button("🔓 Se déconnecter", on_click=lambda: st.session_state.update({"logged_in": False, "username": "", "role": ""}))
+    st.button("🔓 Se déconnecter", on_click=lambda: st.session_state.update({"logged_in": False, "username": "", "role": ""}), key="logout_user")
