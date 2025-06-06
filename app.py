@@ -11,6 +11,8 @@ try:
     import math
     import base64
     import json
+    from fpdf import FPDF
+
 except ModuleNotFoundError as e:
     raise ImportError("Ce script nécessite les bibliothèques `streamlit` et `streamlit-drawable-canvas`. Veuillez les installer avec 'pip install streamlit streamlit-drawable-canvas'") from e
 
