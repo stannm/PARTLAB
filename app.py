@@ -182,7 +182,7 @@ with col2:
 onglets = st.tabs([
     "🖌️ Dessiner ✏️", "➕ Ajouter DXF ✨", "📂 Analyser DXF 🔎", "🛠️ Options ✨", "👤 Mon Profil 💼", "⚙️ Demandes 📂", "🏪 Test matériaux ⚖️"])
 
-# Onglet  : Zone de dessin interactive
+# Onglet 1 : Zone de dessin interactive
 st.header("🎨 Zone de dessin interactive")
 drawing_mode = st.selectbox("✏️ Mode de dessin", ("freedraw", "line", "rect", "circle"))
 stroke_width = st.slider("🖌️ Épaisseur du trait", 1, 10, 2)
