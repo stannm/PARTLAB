@@ -35,7 +35,8 @@ if not st.session_state.logged_in:
             st.session_state.username = username
             st.session_state.role = user["role"]
             st.success("Connexion réussie ✅")
-            st.experimental_rerun()
+            st.rerun()
+            
         else:
             st.error("Identifiants incorrects ❌")
     st.stop()
