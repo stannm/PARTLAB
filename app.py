@@ -174,10 +174,10 @@ col1, col2 = st.columns([1, 5])
 with col1:
     st.image("assets/logo_arcanum.webp", width=100)
 with col2:
-    st.markdown("""
-    <h1 style='font-size: 2.2em;'>🎨 PartLab – Bienvenue <span style='color: #f39c12;'>{}</span></h1>
-    <h4 style='opacity: 0.7;'>Rôle : <b>{}</b></h4>
-    """.format(st.session_state.username, st.session_state.role.upper()), unsafe_allow_html=True)
+    st.markdown(f"""
+    <h1 style='font-size: 2.2em;'>🎨 PartLab – Bienvenue <span style='color: #f39c12;'>{st.session_state.username}</span></h1>
+    <h4 style='opacity: 0.7;'>Rôle : <b>{st.session_state.role.upper()}</b></h4>
+    """, unsafe_allow_html=True)
 
 onglets = st.tabs([
     "🖌️ Dessiner ✏️", "➕ Ajouter DXF ✨", "📂 Analyser DXF 🔎", "🛠️ Options ✨", "👤 Mon Profil 💼", "⚙️ Demandes 📂", "🏪 Test matériaux ⚖️"])
@@ -226,6 +226,22 @@ with onglets[3]:
     quantite = st.number_input("🔢 Quantité", min_value=1, value=1)
     st.info(f"Matière : **{matiere}** | Épaisseur : **{epaisseur}mm** | Quantité : **{quantite}**")
 
+    if st.button("💾 Sauvegarder la configuration"):
+        if "configurations" not in st.session_state:
+            st.session_state.configurations = []
+        st.session_state.configurations.append({
+            "matiere": matiere,
+            "epaisseur": epaisseur,
+            "quantite": quantite
+        })
+        st.success("✅ Configuration enregistrée")
+
+    if "configurations" in st.session_state and st.session_state.configurations:
+        st.markdown("---")
+        st.subheader("📁 Configurations enregistrées")
+        for idx, config in enumerate(st.session_state.configurations):
+            st.markdown(f"🔹 **#{idx+1}** : {config['matiere']}, {config['epaisseur']}mm, {config['quantite']} pièce(s)")
+
 # Onglet 5 : Profil
 with onglets[4]:
     st.subheader("👤 Profil de l'utilisateur")
@@ -239,3 +255,14 @@ with onglets[5]:
     suggestion = st.text_area("💬 Votre idée / amélioration", placeholder="Ex : Ajouter une fonction pour générer des pentes en tôle...")
     if st.button("📉 Soumettre la demande"):
         st.success("Merci pour ta suggestion ! Elle a bien été enregistrée. 🔥")
+
+# Onglet Test matériaux
+with onglets[6]:
+    st.header("🏪 Base de test des matériaux")
+    st.markdown("Voici un aperçu comparatif de matériaux utilisés en découpe.")
+    st.dataframe({
+        "Matière": ["Acier", "Alu", "Inox"],
+        "Densité (g/cm³)": [7.85, 2.7, 8.0],
+        "Résistance (MPa)": [250, 150, 200],
+        "Prix/kg (€)": [0.80, 1.50, 2.00]
+    })
