@@ -44,7 +44,7 @@ if st.button("🔓 Se déconnecter"):
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.session_state.role = ""
-    st.experimental_rerun()
+    st.rerun()
 
 # ============================
 # ✅ Interface principale (après connexion)
