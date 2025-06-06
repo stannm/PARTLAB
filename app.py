@@ -311,3 +311,46 @@ with onglets[6]:
         "Résistance (MPa)": [250, 150, 200],
         "Prix/kg (€)": [0.80, 1.50, 2.00]
     })
+
+with onglets[7]:  # Remplace X par l'index souhaité pour l'onglet devis
+    st.header("📅 Générateur de devis")
+    ref = st.text_input("📝 Référence de la pièce")
+    designation = st.text_input("📄 Désignation")
+    quantite = st.number_input("📉 Quantité (max 500)", min_value=1, max_value=500, step=1)
+    matiere = st.selectbox("🪨 Matière", ["Acier", "Alu", "Inox"])
+    epaisseur = st.number_input("📏 Épaisseur (mm)", min_value=0.1, step=0.1)
+    longueur = st.number_input("🛏️ Longueur (mm)", min_value=0.0)
+    largeur = st.number_input("🛏️ Largeur (mm)", min_value=0.0)
+
+    # Calcul périmètre de base
+    perimetre_base = 2 * (longueur + largeur)
+    st.metric("🔄 Périmètre de base", f"{perimetre_base:.2f} mm")
+
+    st.markdown("---")
+    st.subheader("➕ Détails supplémentaires")
+    trous = [st.number_input(f"Trous · Diamètre {i+1} (mm)", min_value=0.0, step=0.1) for i in range(4)]
+    contours = [st.number_input(f"Contour supplémentaire {i+1} (mm)", min_value=0.0, step=0.1) for i in range(4)]
+
+    perimetre_total = perimetre_base + sum(trous) + sum(contours)
+    st.metric("📊 Périmètre total estimé", f"{perimetre_total:.2f} mm")
+
+    prix_matiere = st.number_input("💰 Prix matière total estimé (€)", min_value=0.0)
+    prix_total = prix_matiere * quantite
+
+    st.success(f"💵 Prix total pour {quantite} pce(s) : **{prix_total:.2f} €**")
+
+    if st.button("📄 Exporter le devis en PDF"):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt=f"Devis pour la pièce : {ref}", ln=True)
+        pdf.cell(200, 10, txt=f"Désignation : {designation}", ln=True)
+        pdf.cell(200, 10, txt=f"Quantité : {quantite}", ln=True)
+        pdf.cell(200, 10, txt=f"Matière : {matiere} | Ép : {epaisseur} mm", ln=True)
+        pdf.cell(200, 10, txt=f"Dim : {longueur} x {largeur} mm", ln=True)
+        pdf.cell(200, 10, txt=f"Périmètre total estimé : {perimetre_total:.2f} mm", ln=True)
+        pdf.cell(200, 10, txt=f"Prix matière : {prix_matiere:.2f} €", ln=True)
+        pdf.cell(200, 10, txt=f"Prix total : {prix_total:.2f} €", ln=True)
+        pdf.output("devis_export.pdf")
+        with open("devis_export.pdf", "rb") as f:
+            st.download_button("📄 Télécharger le devis", f, file_name="devis_export.pdf")
