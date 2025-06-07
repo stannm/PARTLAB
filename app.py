@@ -365,7 +365,11 @@ if onglet_selectionne == "🧾 Devis":
     largeur = st.number_input("📐 Largeur (mm)", min_value=0.0)
 
     machine = st.selectbox("🛠️ Machine de découpe", list(st.session_state.machines_config.keys()))
-    vitesse_coupe = float(st.session_state.machines_config[machine][matiere])
+    if "machines_config" in st.session_state and machine in st.session_state.machines_config:
+    vitesse_coupe = float(st.session_state.machines_config[machine].get(matiere, 1.0))  # 1.0 mm/s valeur par défaut
+else:
+    st.warning("⚠️ Aucune configuration de machine trouvée. Vitesse de coupe par défaut utilisée.")
+    vitesse_coupe = 0.1
 
     perimetre_base = 2 * (longueur + largeur)
     st.metric("🔄 Périmètre de base", f"{perimetre_base:.2f} mm")
