@@ -315,45 +315,86 @@ with onglets[6]:
         "Prix/kg (€)": [0.80, 1.50, 2.00]
     })
 
-with onglets[7]:  # Remplace X par l'index souhaité pour l'onglet devis
-    st.header("📅 Générateur de devis")
+with onglets[7]:  # Onglet Devis
+    st.header("📅 Générateur de devis complet")
+
+    # Admin seulement : configurer machines
+    if st.session_state.role == "admin":
+        st.subheader("⚙️ Configuration machines (admin)")
+        if "machines_config" not in st.session_state:
+            st.session_state.machines_config = {
+                "Machine A": {"Acier": 20, "Alu": 40, "Inox": 15},
+                "Machine B": {"Acier": 25, "Alu": 35, "Inox": 20},
+                "Machine C": {"Acier": 18, "Alu": 30, "Inox": 12}
+            }
+
+        for machine in st.session_state.machines_config:
+            st.markdown(f"### 🔧 {machine}")
+            for mat in st.session_state.machines_config[machine]:
+                st.session_state.machines_config[machine][mat] = st.number_input(
+                    f"{mat} – {machine} (mm/s)",
+                    value=st.session_state.machines_config[machine][mat],
+                    key=f"{machine}_{mat}"
+                )
+
+    st.markdown("## 📐 Données techniques de la pièce")
     ref = st.text_input("📝 Référence de la pièce")
     designation = st.text_input("📄 Désignation")
     quantite = st.number_input("📉 Quantité (max 500)", min_value=1, max_value=500, step=1)
     matiere = st.selectbox("🪨 Matière", ["Acier", "Alu", "Inox"])
     epaisseur = st.number_input("📏 Épaisseur (mm)", min_value=0.1, step=0.1)
-    longueur = st.number_input("🛏️ Longueur (mm)", min_value=0.0)
-    largeur = st.number_input("🛏️ Largeur (mm)", min_value=0.0)
+    longueur = st.number_input("📐 Longueur (mm)", min_value=0.0)
+    largeur = st.number_input("📐 Largeur (mm)", min_value=0.0)
 
-    # Calcul périmètre de base
+    machine = st.selectbox("🛠️ Machine de découpe", list(st.session_state.machines_config.keys()))
+    vitesse_coupe = st.session_state.machines_config[machine][matiere]
+
     perimetre_base = 2 * (longueur + largeur)
     st.metric("🔄 Périmètre de base", f"{perimetre_base:.2f} mm")
 
-    st.markdown("---")
-    st.subheader("➕ Détails supplémentaires")
+    st.markdown("### 🔩 Détails supplémentaires")
     trous = [st.number_input(f"Trous · Diamètre {i+1} (mm)", min_value=0.0, step=0.1) for i in range(4)]
     contours = [st.number_input(f"Contour supplémentaire {i+1} (mm)", min_value=0.0, step=0.1) for i in range(4)]
-
     perimetre_total = perimetre_base + sum(trous) + sum(contours)
     st.metric("📊 Périmètre total estimé", f"{perimetre_total:.2f} mm")
 
-    prix_matiere = st.number_input("💰 Prix matière total estimé (€)", min_value=0.0)
-    prix_total = prix_matiere * quantite
+    st.markdown("## 💸 Coûts de matière et temps de coupe")
+    prix_matiere = st.number_input("💰 Prix matière unitaire (€)", min_value=0.0)
+    tarif_horaire = st.number_input("⏱️ Tarif de coupe à la seconde (€)", value=0.068, step=0.001)
 
-    st.success(f"💵 Prix total pour {quantite} pce(s) : **{prix_total:.2f} €**")
+    temps_coupe_sec = perimetre_total / vitesse_coupe
+    cout_coupe = temps_coupe_sec * tarif_horaire
+    total_unitaire = cout_coupe + prix_matiere
+    prix_total = total_unitaire * quantite
 
-    if st.button("📄 Exporter le devis en PDF"):
+    st.success(f"🧾 Prix total estimé : **{prix_total:.2f} €**")
+
+    # Sous-traitance & transport
+    st.markdown("---")
+    st.subheader("🚚 Sous-traitance & transport")
+    sous_traitance = st.number_input("🔧 Coût de sous-traitance (€)", min_value=0.0, step=0.5)
+    transport = st.number_input("🚛 Coût de transport (€)", min_value=0.0, step=0.5)
+    prix_total_final = prix_total + sous_traitance + transport
+    st.metric("💵 Total final", f"{prix_total_final:.2f} €")
+
+    if st.button("📤 Exporter le devis en PDF"):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
-        pdf.cell(200, 10, txt=f"Devis pour la pièce : {ref}", ln=True)
+        pdf.cell(200, 10, txt=f"Devis – Réf : {ref}", ln=True)
         pdf.cell(200, 10, txt=f"Désignation : {designation}", ln=True)
         pdf.cell(200, 10, txt=f"Quantité : {quantite}", ln=True)
-        pdf.cell(200, 10, txt=f"Matière : {matiere} | Ép : {epaisseur} mm", ln=True)
+        pdf.cell(200, 10, txt=f"Matière : {matiere} | Épaisseur : {epaisseur} mm", ln=True)
         pdf.cell(200, 10, txt=f"Dim : {longueur} x {largeur} mm", ln=True)
-        pdf.cell(200, 10, txt=f"Périmètre total estimé : {perimetre_total:.2f} mm", ln=True)
+        pdf.cell(200, 10, txt=f"Machine : {machine} (vitesse : {vitesse_coupe} mm/s)", ln=True)
+        pdf.cell(200, 10, txt=f"Périmètre total : {perimetre_total:.2f} mm", ln=True)
+        pdf.cell(200, 10, txt=f"Temps découpe estimé : {temps_coupe_sec:.2f} sec", ln=True)
         pdf.cell(200, 10, txt=f"Prix matière : {prix_matiere:.2f} €", ln=True)
-        pdf.cell(200, 10, txt=f"Prix total : {prix_total:.2f} €", ln=True)
+        pdf.cell(200, 10, txt=f"Coût découpe : {cout_coupe:.2f} €", ln=True)
+        pdf.cell(200, 10, txt=f"Total unitaire : {total_unitaire:.2f} €", ln=True)
+        pdf.cell(200, 10, txt=f"Sous-traitance : {sous_traitance:.2f} €", ln=True)
+        pdf.cell(200, 10, txt=f"Transport : {transport:.2f} €", ln=True)
+        pdf.cell(200, 10, txt=f"✅ Total devis : {prix_total_final:.2f} €", ln=True)
         pdf.output("devis_export.pdf")
         with open("devis_export.pdf", "rb") as f:
-            st.download_button("📄 Télécharger le devis", f, file_name="devis_export.pdf")
+            st.download_button("📄 Télécharger le devis PDF", f, file_name="devis_export.pdf")
