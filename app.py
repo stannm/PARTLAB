@@ -354,9 +354,6 @@ if onglet_selectionne == "🧾 Devis":
                     key=f"{machine}_{mat}"
                 )
 
-    # (continue avec le reste du code de l’onglet devis ici...)
-
-
     st.markdown("## 📐 Données techniques de la pièce")
     ref = st.text_input("📝 Référence de la pièce")
     designation = st.text_input("📄 Désignation")
