@@ -323,23 +323,21 @@ with onglets[7]:  # Onglet Devis
         st.subheader("⚙️ Configuration machines (admin)")
         if "machines_config" not in st.session_state:
             st.session_state.machines_config = {
-                "Machine A": {"Acier": 20, "Alu": 40, "Inox": 15},
-                "Machine B": {"Acier": 25, "Alu": 35, "Inox": 20},
-                "Machine C": {"Acier": 18, "Alu": 30, "Inox": 12}
+                "Machine A": {"Acier": 20.0, "Alu": 40.0, "Inox": 15.0},
+                "Machine B": {"Acier": 25.0, "Alu": 35.0, "Inox": 20.0},
+                "Machine C": {"Acier": 18.0, "Alu": 30.0, "Inox": 12.0}
             }
-for machine in st.session_state.machines_config:
-    st.markdown(f"### 🛠️ {machine}")
-    
-    for mat in st.session_state.machines_config[machine]:
-        st.session_state.machines_config[machine][mat] = st.number_input(
-            f"{mat} – {machine} (mm/s)",
-            value=st.session_state.machines_config[machine][mat],
-            min_value=0.001,
-            step=0.001,
-            format="%.3f",
-            key=f"{machine}_{mat}"
-        )
-
+        for machine in st.session_state.machines_config:
+            st.markdown(f"### 🛠️ {machine}")
+            for mat in st.session_state.machines_config[machine]:
+                st.session_state.machines_config[machine][mat] = st.number_input(
+                    f"{mat} – {machine} (mm/s)",
+                    value=float(st.session_state.machines_config[machine][mat]),
+                    min_value=0.001,
+                    step=0.001,
+                    format="%.3f",
+                    key=f"{machine}_{mat}"
+                )
 
     st.markdown("## 📐 Données techniques de la pièce")
     ref = st.text_input("📝 Référence de la pièce")
@@ -351,7 +349,7 @@ for machine in st.session_state.machines_config:
     largeur = st.number_input("📐 Largeur (mm)", min_value=0.0)
 
     machine = st.selectbox("🛠️ Machine de découpe", list(st.session_state.machines_config.keys()))
-    vitesse_coupe = st.session_state.machines_config[machine][matiere]
+    vitesse_coupe = float(st.session_state.machines_config[machine][matiere])
 
     perimetre_base = 2 * (longueur + largeur)
     st.metric("🔄 Périmètre de base", f"{perimetre_base:.2f} mm")
@@ -365,7 +363,6 @@ for machine in st.session_state.machines_config:
     st.markdown("## 💸 Coûts de matière et temps de coupe")
     prix_matiere = st.number_input("💰 Prix matière unitaire (€)", min_value=0.0)
     tarif_horaire = st.number_input("⏱️ Tarif de coupe à la seconde (€)", value=0.068, step=0.001)
-
     temps_coupe_sec = perimetre_total / vitesse_coupe
     cout_coupe = temps_coupe_sec * tarif_horaire
     total_unitaire = cout_coupe + prix_matiere
@@ -373,7 +370,6 @@ for machine in st.session_state.machines_config:
 
     st.success(f"🧾 Prix total estimé : **{prix_total:.2f} €**")
 
-    # Sous-traitance & transport
     st.markdown("---")
     st.subheader("🚚 Sous-traitance & transport")
     sous_traitance = st.number_input("🔧 Coût de sous-traitance (€)", min_value=0.0, step=0.5)
@@ -382,37 +378,39 @@ for machine in st.session_state.machines_config:
     st.metric("💵 Total final", f"{prix_total_final:.2f} €")
 
     st.markdown("---")
-st.subheader("🔩 Coûts supplémentaires par poste")
+    st.subheader("🔩 Coûts supplémentaires par poste")
 
-# Tarifs configurables (en mode admin, tu pourras les rendre modifiables)
-tarifs_postes = {
-    "Pliage": 0.50,
-    "Ébavurage": 0.40,
-    "Inserts": 0.60,
-    "Gravure": 0.30,
-    "Reprise mécanique": 0.70
-}
+    tarifs_postes = {
+        "Pliage": 0.50,
+        "Ébavurage": 0.40,
+        "Inserts": 0.60,
+        "Gravure": 0.30,
+        "Reprise mécanique": 0.70
+    }
 
-postes_selectionnes = st.multiselect("🛠️ Activer les postes supplémentaires", list(tarifs_postes.keys()))
+    postes_selectionnes = st.multiselect("🛠️ Activer les postes supplémentaires", list(tarifs_postes.keys()))
+    donnees_postes = []
+    total_postes = 0.0
 
-donnees_postes = []
-total_postes = 0.0
+    for poste in postes_selectionnes:
+        duree = st.selectbox(
+            f"⏱️ Durée estimée pour {poste} (min)",
+            options=[round(x, 2) for x in np.arange(0.25, 200.25, 0.25)],
+            key=f"duree_{poste}"
+        )
+        tarif = tarifs_postes[poste]
+        cout = round(duree * tarif, 2)
+        total_postes += cout
+        donnees_postes.append({
+            "Poste": poste,
+            "Durée (min)": duree,
+            "Tarif €/min": tarif,
+            "Coût total (€)": cout
+        })
 
-for poste in postes_selectionnes:
-    duree = st.selectbox(f"⏱️ Durée estimée pour {poste} (min)", options=[round(x, 2) for x in list(np.arange(0.25, 200.25, 0.25))], key=f"duree_{poste}")
-    tarif = tarifs_postes[poste]
-    cout = round(duree * tarif, 2)
-    total_postes += cout
-    donnees_postes.append({
-        "Poste": poste,
-        "Durée (min)": duree,
-        "Tarif €/min": tarif,
-        "Coût total (€)": cout
-    })
-
-if donnees_postes:
-    st.dataframe(donnees_postes)
-    st.success(f"🧾 Total coûts supplémentaires : **{total_postes:.2f} €**")
+    if donnees_postes:
+        st.dataframe(donnees_postes)
+        st.success(f"🧾 Total coûts supplémentaires : **{total_postes:.2f} €**")
 
     if st.button("📤 Exporter le devis en PDF"):
         pdf = FPDF()
