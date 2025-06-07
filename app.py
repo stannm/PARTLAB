@@ -186,21 +186,28 @@ onglets = st.tabs([
 ])
 
 with onglets[0]:
-    st.header("🎨 Zone de dessin interactive")
-    drawing_mode = st.selectbox("✏️ Mode de dessin", ("freedraw", "line", "rect", "circle"))
-    stroke_width = st.slider("🖌️ Épaisseur du trait", 1, 10, 2)
-    fill_color = st.color_picker("🎨 Couleur de remplissage", "#ee6677")
-    stroke_color = st.color_picker("🖍️ Couleur du trait", "#000000")
+    st.header("🎨 Zone de dessin interactive améliorée")
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        drawing_mode = st.selectbox("✏️ Mode de dessin", ("freedraw", "line", "rect", "circle", "transform"))
+    with col2:
+        stroke_width = st.slider("🖌️ Épaisseur du trait", 1, 10, 2)
+    with col3:
+        stroke_color = st.color_picker("🎯 Couleur du trait", "#000000")
+
+    fill_color = st.color_picker("🌈 Couleur de remplissage", "#ee6677")
+    show_grid = st.checkbox("🧮 Afficher une grille (snap visuel uniquement)", value=True)
 
     canvas_result = st_canvas(
         fill_color=fill_color,
         stroke_width=stroke_width,
         stroke_color=stroke_color,
         background_color="#ffffff",
-        height=400,
-        width=800,
+        height=500,
+        width=900,
         drawing_mode=drawing_mode,
-        key="canvas",
+        key="canvas_dessin_ameliore"
     )
 
     if canvas_result.json_data:
@@ -211,7 +218,7 @@ with onglets[0]:
             pdf = FPDF()
             pdf.add_page()
             pdf.set_font("Arial", size=12)
-            pdf.cell(200, 10, txt="Aperçu du dessin (formes non visibles)", ln=True, align="C")
+            pdf.cell(200, 10, txt="Dessin exporté – formes non visibles", ln=True, align="C")
             pdf.output("dessin_export.pdf")
             with open("dessin_export.pdf", "rb") as f:
                 st.download_button("📄 Télécharger PDF", f, file_name="dessin_export.pdf")
@@ -231,17 +238,14 @@ with onglets[0]:
                 elif obj["type"] == "rect":
                     x, y = obj["left"], obj["top"]
                     w, h = obj["width"], obj["height"]
-                    msp.add_lwpolyline([
-                        (x, y), (x + w, y), (x + w, y + h), (x, y + h), (x, y)
-                    ], close=True)
+                    msp.add_lwpolyline([(x, y), (x+w, y), (x+w, y+h), (x, y+h), (x, y)], close=True)
                 elif obj["type"] == "circle":
                     x, y = obj["left"] + obj["radius"], obj["top"] + obj["radius"]
                     r = obj["radius"]
                     msp.add_circle((x, y), r)
             buffer = io.BytesIO()
             doc.write(buffer)
-            st.download_button("🔀 Télécharger DXF", buffer.getvalue(), file_name="dessin_export.dxf")
-
+            st.download_button("📐 Télécharger DXF", buffer.getvalue(), file_name="dessin_export.dxf")
 
 
 # Onglet 2 : Ajouter DXF
