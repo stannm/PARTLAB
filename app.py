@@ -330,7 +330,7 @@ if onglet_selectionne == "🏪 Test matériaux ⚖️":
     })
 
 # Onglet Devis
-if onglet_selectionne == "🧾 Devis":
+if onglet_selectionne == "📅 Devis":
     st.header("🧾 Générateur de devis complet")
 
     # Initialisation des machines si pas encore définies
