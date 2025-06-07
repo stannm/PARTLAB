@@ -329,10 +329,10 @@ if onglet_selectionne == "🏪 Test matériaux ⚖️":
     })
 
 # Onglet Devis
-if onglet_selectionne == "📄 Devis":
+if onglet_selectionne == "🧾 Devis":
     st.header("🧾 Générateur de devis complet")
 
-    # Admin : Configuration des machines
+    # Admin seulement : configurer machines
     if st.session_state.role == "admin":
         st.subheader("⚙️ Configuration machines (admin)")
         if "machines_config" not in st.session_state:
@@ -353,6 +353,9 @@ if onglet_selectionne == "📄 Devis":
                     format="%.3f",
                     key=f"{machine}_{mat}"
                 )
+
+    # (continue avec le reste du code de l’onglet devis ici...)
+
 
     st.markdown("## 📐 Données techniques de la pièce")
     ref = st.text_input("📝 Référence de la pièce")
