@@ -330,15 +330,18 @@ with onglets[7]:  # Onglet Devis
 
         for machine in st.session_state.machines_config:
             st.markdown(f"### 🔧 {machine}")
-            for mat in st.session_state.machines_config[machine]:
-            st.session_state.machines_config[machine][mat] = st.number_input(
-    f"{mat} – {machine} (mm/s)",
-    value=st.session_state.machines_config[machine][mat],
-    min_value=0.001,
-    step=0.001,
-    format="%.3f",
-    key=f"{machine}_{mat}"
-)
+        for machine in st.session_state.machines_config:
+    st.markdown(f"### 🔧 {machine}")
+    for mat in st.session_state.machines_config[machine]:
+        st.session_state.machines_config[machine][mat] = st.number_input(
+            f"{mat} – {machine} (mm/s)",
+            value=st.session_state.machines_config[machine][mat],
+            min_value=0.001,
+            step=0.001,
+            format="%.3f",
+            key=f"{machine}_{mat}"
+        )
+
 
     st.markdown("## 📐 Données techniques de la pièce")
     ref = st.text_input("📝 Référence de la pièce")
