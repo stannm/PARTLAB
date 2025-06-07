@@ -328,7 +328,8 @@ if onglet_selectionne == "🏪 Test matériaux ⚖️":
         "Prix/kg (€)": [0.80, 1.50, 2.00]
     })
 
-with onglets[7]:
+# Onglet Devis
+if onglet_selectionne == "📄 Devis":
     st.header("🧾 Générateur de devis complet")
 
     # Admin : Configuration des machines
@@ -447,7 +448,10 @@ with onglets[7]:
         pdf.output("devis_export.pdf")
         with open("devis_export.pdf", "rb") as f:
             st.download_button("📄 Télécharger le devis PDF", f, file_name="devis_export.pdf")
-with onglets[8]:
+
+
+if onglet_selectionne == "👥 Clients":
+
     st.header("👥 Gestion des clients")
 
     if "clients" not in st.session_state:
