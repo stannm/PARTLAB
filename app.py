@@ -327,11 +327,9 @@ with onglets[7]:  # Onglet Devis
                 "Machine B": {"Acier": 25, "Alu": 35, "Inox": 20},
                 "Machine C": {"Acier": 18, "Alu": 30, "Inox": 12}
             }
-
-        for machine in st.session_state.machines_config:
-            st.markdown(f"### 🔧 {machine}")
-        for machine in st.session_state.machines_config:
-    st.markdown(f"### 🔧 {machine}")
+for machine in st.session_state.machines_config:
+    st.markdown(f"### 🛠️ {machine}")
+    
     for mat in st.session_state.machines_config[machine]:
         st.session_state.machines_config[machine][mat] = st.number_input(
             f"{mat} – {machine} (mm/s)",
