@@ -333,7 +333,7 @@ if onglet_selectionne == "🏪 Test matériaux ⚖️":
 if onglet_selectionne == "🧾 Devis":
     st.header("🧾 Générateur de devis complet")
 
-    # Admin seulement : configurer machines
+    # Admin : configurer machines
     if st.session_state.role == "admin":
         st.subheader("⚙️ Configuration machines (admin)")
         if "machines_config" not in st.session_state:
@@ -365,11 +365,16 @@ if onglet_selectionne == "🧾 Devis":
     largeur = st.number_input("📐 Largeur (mm)", min_value=0.0)
 
     machine = st.selectbox("🛠️ Machine de découpe", list(st.session_state.machines_config.keys()))
-    if "machines_config" in st.session_state and machine in st.session_state.machines_config:
-    vitesse_coupe = float(st.session_state.machines_config[machine].get(matiere, 1.0))  # 1.0 mm/s valeur par défaut
-else:
-    st.warning("⚠️ Aucune configuration de machine trouvée. Vitesse de coupe par défaut utilisée.")
-    vitesse_coupe = 0.1
+
+    if (
+        "machines_config" in st.session_state
+        and machine in st.session_state.machines_config
+        and matiere in st.session_state.machines_config[machine]
+    ):
+        vitesse_coupe = float(st.session_state.machines_config[machine][matiere])
+    else:
+        st.warning("⚠️ Problème de configuration machine/matière. Vitesse par défaut utilisée.")
+        vitesse_coupe = 1.0
 
     perimetre_base = 2 * (longueur + largeur)
     st.metric("🔄 Périmètre de base", f"{perimetre_base:.2f} mm")
@@ -383,6 +388,7 @@ else:
     st.markdown("## 💸 Coûts de matière et temps de coupe")
     prix_matiere = st.number_input("💰 Prix matière unitaire (€)", min_value=0.0)
     tarif_horaire = st.number_input("⏱️ Tarif de coupe à la seconde (€)", value=0.068, step=0.001)
+
     temps_coupe_sec = perimetre_total / vitesse_coupe
     cout_coupe = temps_coupe_sec * tarif_horaire
     total_unitaire = cout_coupe + prix_matiere
@@ -399,7 +405,6 @@ else:
 
     st.markdown("---")
     st.subheader("🔩 Coûts supplémentaires par poste")
-
     tarifs_postes = {
         "Pliage": 0.50,
         "Ébavurage": 0.40,
@@ -407,7 +412,6 @@ else:
         "Gravure": 0.30,
         "Reprise mécanique": 0.70
     }
-
     postes_selectionnes = st.multiselect("🛠️ Activer les postes supplémentaires", list(tarifs_postes.keys()))
     donnees_postes = []
     total_postes = 0.0
