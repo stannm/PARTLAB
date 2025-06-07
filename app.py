@@ -181,8 +181,7 @@ with col2:
     <h4 style='opacity: 0.7;'>Rôle : <b>{st.session_state.role.upper()}</b></h4>
     """, unsafe_allow_html=True)
 
-onglets = st.tabs([
-    "🖌️ Dessiner onglet_selectionne = st.sidebar.radio("📁 Navigation", [
+onglet_selectionne = st.sidebar.radio("📁 Navigation", [
     "🖌️ Dessiner ✏️",
     "➕ Ajouter DXF ✨",
     "📂 Analyser DXF 🔎",
@@ -194,7 +193,9 @@ onglets = st.tabs([
     "👥 Clients"
 ])
 
-    st.header("🎨 Zone de dessin interactive améliorée")
+if onglet_selectionne == "🖌️ Dessiner ✏️":
+    st.header("🎨 Zone de dessin interactive")
+ 
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -257,8 +258,10 @@ onglets = st.tabs([
 
 
 # Onglet 2 : Ajouter DXF
-with onglets[1]:
-    st.subheader("➕ Importer un fichier DXF")
+if onglet_selectionne == "➕ Ajouter DXF ✨":
+    st.header("📂 Ajouter DXF")
+    st.subheader("📤 Importer un fichier DXF")
+
     uploaded_file = st.file_uploader("Dépose ton fichier DXF ici :", type=["dxf"])
     if uploaded_file is not None:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".dxf") as tmp_file:
@@ -266,9 +269,9 @@ with onglets[1]:
             dxf_path = tmp_file.name
         st.success("✅ Fichier DXF chargé avec succès")
 
-# Onglet 3 : Analyser DXF
-with onglets[2]:
-    st.subheader("📏 Analyse du fichier DXF")
+
+if onglet_selectionne == "📂 Analyser DXF 🔎":
+    st.header("📏 Analyse du fichier DXF")
     try:
         doc = load_dxf(dxf_path)
         perimeter, holes, _ = get_dxf_perimeter_and_holes(doc)
@@ -279,8 +282,8 @@ with onglets[2]:
         st.warning("⚠️ Aucun fichier DXF valide à analyser ou une erreur est survenue.")
 
 # Onglet 4 : Options utilisateur
-with onglets[3]:
-    st.subheader("🛠️ Paramètres personnalisés")
+if onglet_selectionne == "⚙️ Options ✨":
+    st.header("⚙️ Paramètres personnalisés")
     matiere = st.selectbox("🧱 Matière", ["Acier", "Alu", "Inox"])
     epaisseur = st.slider("📏 Épaisseur (mm)", 0.5, 20.0, step=0.5)
     quantite = st.number_input("🔢 Quantité", min_value=1, value=1)
@@ -302,22 +305,20 @@ with onglets[3]:
         for idx, config in enumerate(st.session_state.configurations):
             st.markdown(f"🔹 **#{idx+1}** : {config['matiere']}, {config['epaisseur']}mm, {config['quantite']} pièce(s)")
 
-# Onglet 5 : Profil
-with onglets[4]:
-    st.subheader("👤 Profil de l'utilisateur")
+if onglet_selectionne == "👤 Mon Profil 💼":
+    st.header("👤 Profil de l'utilisateur")
     st.write(f"**Nom d'utilisateur :** {st.session_state.username}")
     st.write(f"**Rôle :** {st.session_state.role.upper()}")
 
-# Onglet Suggestions
-with onglets[5]:
-    st.header("🧙‍♂️ Boîte à idées & Améliorations")
-    st.markdown("Ajoute ici des idées de fonctionnalités ou d'amélioration du site PartLab.")
+if onglet_selectionne == "⚙️ Demandes 📂":
+    st.header("🧠 Boîte à idées & Améliorations")
+    st.markdown("Ajoute ici des idées de fonctionnalités ou d’amélioration du site PartLab.")
     suggestion = st.text_area("💬 Votre idée / amélioration", placeholder="Ex : Ajouter une fonction pour générer des pentes en tôle...")
-    if st.button("📉 Soumettre la demande"):
+    if st.button("📩 Soumettre la demande"):
         st.success("Merci pour ta suggestion ! Elle a bien été enregistrée. 🔥")
 
 # Onglet Test matériaux
-with onglets[6]:
+if onglet_selectionne == "🏪 Test matériaux ⚖️":
     st.header("🏪 Base de test des matériaux")
     st.markdown("Voici un aperçu comparatif de matériaux utilisés en découpe.")
     st.dataframe({
@@ -327,10 +328,10 @@ with onglets[6]:
         "Prix/kg (€)": [0.80, 1.50, 2.00]
     })
 
-with onglets[7]:  # Onglet Devis
-    st.header("📅 Générateur de devis complet")
+with onglets[7]:
+    st.header("🧾 Générateur de devis complet")
 
-    # Admin seulement : configurer machines
+    # Admin : Configuration des machines
     if st.session_state.role == "admin":
         st.subheader("⚙️ Configuration machines (admin)")
         if "machines_config" not in st.session_state:
@@ -339,6 +340,7 @@ with onglets[7]:  # Onglet Devis
                 "Machine B": {"Acier": 25.0, "Alu": 35.0, "Inox": 20.0},
                 "Machine C": {"Acier": 18.0, "Alu": 30.0, "Inox": 12.0}
             }
+
         for machine in st.session_state.machines_config:
             st.markdown(f"### 🛠️ {machine}")
             for mat in st.session_state.machines_config[machine]:
