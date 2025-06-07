@@ -182,10 +182,18 @@ with col2:
     """, unsafe_allow_html=True)
 
 onglets = st.tabs([
-    "🖌️ Dessiner ✏️", "➕ Ajouter DXF ✨", "📂 Analyser DXF 🔎", "🛠️ Options ✨", "👤 Mon Profil 💼", "⚙️ Demandes 📂", "🏪 Test matériaux ⚖️", "📅 Devis 💰"
+    "🖌️ Dessiner onglet_selectionne = st.sidebar.radio("📁 Navigation", [
+    "🖌️ Dessiner ✏️",
+    "➕ Ajouter DXF ✨",
+    "📂 Analyser DXF 🔎",
+    "⚙️ Options ✨",
+    "👤 Mon Profil 💼",
+    "⚙️ Demandes 📂",
+    "🏪 Test matériaux ⚖️",
+    "📅 Devis",
+    "👥 Clients"
 ])
 
-with onglets[0]:
     st.header("🎨 Zone de dessin interactive améliorée")
 
     col1, col2, col3 = st.columns(3)
@@ -437,3 +445,44 @@ with onglets[7]:  # Onglet Devis
         pdf.output("devis_export.pdf")
         with open("devis_export.pdf", "rb") as f:
             st.download_button("📄 Télécharger le devis PDF", f, file_name="devis_export.pdf")
+with onglets[8]:
+    st.header("👥 Gestion des clients")
+
+    if "clients" not in st.session_state:
+        st.session_state.clients = []
+
+    st.subheader("➕ Ajouter un client")
+    nom_entreprise = st.text_input("🏢 Nom de l'entreprise")
+    nom_client = st.text_input("👤 Nom du client")
+    email = st.text_input("📧 Adresse email")
+    telephone = st.text_input("📞 Numéro de téléphone")
+    notes = st.text_area("📝 Notes")
+
+    if st.button("📥 Ajouter le client"):
+        if nom_entreprise and nom_client:
+            st.session_state.clients.append({
+                "Entreprise": nom_entreprise,
+                "Nom": nom_client,
+                "Email": email,
+                "Téléphone": telephone,
+                "Notes": notes
+            })
+            st.success("✅ Client ajouté")
+        else:
+            st.warning("⚠️ Veuillez remplir au minimum l'entreprise et le nom du client.")
+
+    if st.session_state.clients:
+        st.subheader("📋 Liste des clients enregistrés")
+        for i, client in enumerate(st.session_state.clients):
+            st.markdown(f"""
+            **{client['Nom']}**  
+            🏢 {client['Entreprise']}  
+            📧 {client['Email']}  
+            📞 {client['Téléphone']}  
+            📝 {client['Notes']}  
+            """)
+            if st.session_state.role == "admin":
+                if st.button(f"🗑️ Supprimer le client {client['Nom']}", key=f"suppr_{i}"):
+                    st.session_state.clients.pop(i)
+                    st.success("🗑️ Client supprimé")
+                    st.experimental_rerun()
