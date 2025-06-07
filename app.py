@@ -333,26 +333,25 @@ if onglet_selectionne == "🏪 Test matériaux ⚖️":
 if onglet_selectionne == "🧾 Devis":
     st.header("🧾 Générateur de devis complet")
 
-    # Admin : configurer machines
+    # Initialisation des machines si pas encore définies
+    if "machines_config" not in st.session_state:
+        st.session_state.machines_config = {
+            "Machine A": {"Acier": 20.0, "Alu": 40.0, "Inox": 15.0},
+            "Machine B": {"Acier": 25.0, "Alu": 35.0, "Inox": 20.0},
+            "Machine C": {"Acier": 18.0, "Alu": 30.0, "Inox": 12.0}
+        }
+
+    # Admin peut modifier les vitesses
     if st.session_state.role == "admin":
         st.subheader("⚙️ Configuration machines (admin)")
-        if "machines_config" not in st.session_state:
-            st.session_state.machines_config = {
-                "Machine A": {"Acier": 20.0, "Alu": 40.0, "Inox": 15.0},
-                "Machine B": {"Acier": 25.0, "Alu": 35.0, "Inox": 20.0},
-                "Machine C": {"Acier": 18.0, "Alu": 30.0, "Inox": 12.0}
-            }
-
         for machine in st.session_state.machines_config:
             st.markdown(f"### 🛠️ {machine}")
             for mat in st.session_state.machines_config[machine]:
+                key = f"{machine}_{mat}"
+                valeur = float(st.session_state.machines_config[machine][mat])
                 st.session_state.machines_config[machine][mat] = st.number_input(
-                    f"{mat} – {machine} (mm/s)",
-                    value=float(st.session_state.machines_config[machine][mat]),
-                    min_value=0.001,
-                    step=0.001,
-                    format="%.3f",
-                    key=f"{machine}_{mat}"
+                    f"{mat} – {machine} (mm/s)", value=valeur,
+                    min_value=0.001, step=0.001, format="%.3f", key=key
                 )
 
     st.markdown("## 📐 Données techniques de la pièce")
@@ -363,18 +362,8 @@ if onglet_selectionne == "🧾 Devis":
     epaisseur = st.number_input("📏 Épaisseur (mm)", min_value=0.1, step=0.1)
     longueur = st.number_input("📐 Longueur (mm)", min_value=0.0)
     largeur = st.number_input("📐 Largeur (mm)", min_value=0.0)
-
     machine = st.selectbox("🛠️ Machine de découpe", list(st.session_state.machines_config.keys()))
-
-    if (
-        "machines_config" in st.session_state
-        and machine in st.session_state.machines_config
-        and matiere in st.session_state.machines_config[machine]
-    ):
-        vitesse_coupe = float(st.session_state.machines_config[machine][matiere])
-    else:
-        st.warning("⚠️ Problème de configuration machine/matière. Vitesse par défaut utilisée.")
-        vitesse_coupe = 1.0
+    vitesse_coupe = float(st.session_state.machines_config[machine].get(matiere, 1.0))  # Valeur de secours
 
     perimetre_base = 2 * (longueur + largeur)
     st.metric("🔄 Périmètre de base", f"{perimetre_base:.2f} mm")
@@ -388,7 +377,6 @@ if onglet_selectionne == "🧾 Devis":
     st.markdown("## 💸 Coûts de matière et temps de coupe")
     prix_matiere = st.number_input("💰 Prix matière unitaire (€)", min_value=0.0)
     tarif_horaire = st.number_input("⏱️ Tarif de coupe à la seconde (€)", value=0.068, step=0.001)
-
     temps_coupe_sec = perimetre_total / vitesse_coupe
     cout_coupe = temps_coupe_sec * tarif_horaire
     total_unitaire = cout_coupe + prix_matiere
@@ -406,12 +394,10 @@ if onglet_selectionne == "🧾 Devis":
     st.markdown("---")
     st.subheader("🔩 Coûts supplémentaires par poste")
     tarifs_postes = {
-        "Pliage": 0.50,
-        "Ébavurage": 0.40,
-        "Inserts": 0.60,
-        "Gravure": 0.30,
-        "Reprise mécanique": 0.70
+        "Pliage": 0.50, "Ébavurage": 0.40, "Inserts": 0.60,
+        "Gravure": 0.30, "Reprise mécanique": 0.70
     }
+
     postes_selectionnes = st.multiselect("🛠️ Activer les postes supplémentaires", list(tarifs_postes.keys()))
     donnees_postes = []
     total_postes = 0.0
