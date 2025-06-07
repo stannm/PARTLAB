@@ -380,6 +380,39 @@ with onglets[7]:  # Onglet Devis
     prix_total_final = prix_total + sous_traitance + transport
     st.metric("💵 Total final", f"{prix_total_final:.2f} €")
 
+    st.markdown("---")
+st.subheader("🔩 Coûts supplémentaires par poste")
+
+# Tarifs configurables (en mode admin, tu pourras les rendre modifiables)
+tarifs_postes = {
+    "Pliage": 0.50,
+    "Ébavurage": 0.40,
+    "Inserts": 0.60,
+    "Gravure": 0.30,
+    "Reprise mécanique": 0.70
+}
+
+postes_selectionnes = st.multiselect("🛠️ Activer les postes supplémentaires", list(tarifs_postes.keys()))
+
+donnees_postes = []
+total_postes = 0.0
+
+for poste in postes_selectionnes:
+    duree = st.selectbox(f"⏱️ Durée estimée pour {poste} (min)", options=[round(x, 2) for x in list(np.arange(0.25, 200.25, 0.25))], key=f"duree_{poste}")
+    tarif = tarifs_postes[poste]
+    cout = round(duree * tarif, 2)
+    total_postes += cout
+    donnees_postes.append({
+        "Poste": poste,
+        "Durée (min)": duree,
+        "Tarif €/min": tarif,
+        "Coût total (€)": cout
+    })
+
+if donnees_postes:
+    st.dataframe(donnees_postes)
+    st.success(f"🧾 Total coûts supplémentaires : **{total_postes:.2f} €**")
+
     if st.button("📤 Exporter le devis en PDF"):
         pdf = FPDF()
         pdf.add_page()
