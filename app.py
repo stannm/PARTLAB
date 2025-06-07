@@ -1,6 +1,7 @@
 # 📄 Fichier : app.py
 
 try:
+    import numpy as np
     import streamlit as st
     import tempfile
     import os
